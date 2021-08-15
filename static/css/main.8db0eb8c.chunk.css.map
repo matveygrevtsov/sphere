@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack://src/index.css"],"names":[],"mappings":"AAAA,KACE,QACF,CAEA,oBACE,YAAa,CACb,UACF","file":"main.8db0eb8c.chunk.css","sourcesContent":["body {\n  margin: 0;\n}\n\n#animationContainer {\n  height: 100vh;\n  width: 100%;\n}\n"]}
