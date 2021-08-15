@@ -1,0 +1,8 @@
+body {
+  margin: 0;
+}
+
+#animationContainer {
+  height: 100vh;
+  width: 100%;
+}
