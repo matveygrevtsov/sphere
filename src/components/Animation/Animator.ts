@@ -7,6 +7,8 @@ const mediaBreakPoint = 1024
 const config = {
   radius: 4.5,
   cardSize: 1,
+  mobileRadius: 5,
+  mobileCardSize: 2,
   rotationSpeed: 1,
   color: '#6101AF',
   mouseSensitivity: 1,
@@ -35,6 +37,9 @@ export class Animator {
   private readonly group: THREE.Group
   private texture: THREE.Texture | undefined
   private requestAnimation: number
+  private mobileMode: boolean
+  private radius: number
+  private cardSize: number
 
   constructor(props: AnimatorProps) {
     this.containerHtmlElement = props.containerHtmlElement
@@ -76,6 +81,10 @@ export class Animator {
     // Объявляем TextureLoader
     this.textureLoader = new THREE.TextureLoader()
 
+    this.mobileMode = window.innerWidth < mediaBreakPoint
+    this.radius = this.mobileMode ? config.mobileRadius : config.radius
+    this.cardSize = this.mobileMode ? config.mobileCardSize : config.cardSize
+
     window.addEventListener('resize', () => this.resize())
     window.addEventListener('mousemove', (event) => this.handleMouseMove(event))
   }
@@ -105,7 +114,10 @@ export class Animator {
       .max(7)
       .step(0.01)
       .name('Radius')
-      .onChange(() => this.refreshScene())
+      .onChange(() => {
+        this.calculateRadiusAndCardSize()
+        this.refreshScene()
+      })
 
     gui
       .add(config, 'cardSize')
@@ -113,7 +125,32 @@ export class Animator {
       .max(5)
       .step(0.01)
       .name('cardSize')
-      .onChange(() => this.refreshScene())
+      .onChange(() => {
+        this.calculateRadiusAndCardSize()
+        this.refreshScene()
+      })
+
+    gui
+      .add(config, 'mobileRadius')
+      .min(1)
+      .max(7)
+      .step(0.01)
+      .name('mobileRadius')
+      .onChange(() => {
+        this.calculateRadiusAndCardSize()
+        this.refreshScene()
+      })
+
+    gui
+      .add(config, 'mobileCardSize')
+      .min(0.7)
+      .max(5)
+      .step(0.01)
+      .name('mobileCardSize')
+      .onChange(() => {
+        this.calculateRadiusAndCardSize()
+        this.refreshScene()
+      })
 
     gui
       .add(config, 'mouseSensitivity')
@@ -143,26 +180,40 @@ export class Animator {
     // Update renderer
     this.renderer.setSize(width, height)
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+    if (
+      (width < mediaBreakPoint && !this.mobileMode) ||
+      (width >= mediaBreakPoint && this.mobileMode)
+    ) {
+      this.calculateRadiusAndCardSize()
+      this.refreshScene()
+    }
+  }
+
+  private calculateRadiusAndCardSize() {
+    this.mobileMode = window.innerWidth < mediaBreakPoint
+    this.radius = this.mobileMode ? config.mobileRadius : config.radius
+    this.cardSize = this.mobileMode ? config.mobileCardSize : config.cardSize
   }
 
   private addObjectsToScene() {
     // Количество субсфер
     const subSphereNumber =
-      1 + Math.floor((config.radius - config.cardSize / 2) / config.cardSize)
+      1 + Math.floor((this.radius - this.cardSize / 2) / this.cardSize)
     for (
       let subSphereIndex = 0;
       subSphereIndex < subSphereNumber;
       subSphereIndex++
     ) {
-      const subSphereRadius = (subSphereIndex + 0.5) * config.cardSize
+      const subSphereRadius = (subSphereIndex + 0.5) * this.cardSize
 
-      if (config.cardSize > 2 * subSphereRadius) {
+      if (this.cardSize > 2 * subSphereRadius) {
         continue
       }
 
       // Количество окружностей на субсфере
       const circlesNumber = Math.floor(
-        Math.PI / (2 * Math.asin(config.cardSize / (2 * subSphereRadius))),
+        Math.PI / (2 * Math.asin(this.cardSize / (2 * subSphereRadius))),
       )
       for (let circleIndex = 0; circleIndex <= circlesNumber; circleIndex++) {
         const y =
@@ -174,17 +225,17 @@ export class Animator {
 
         // Количество объектов, которые уместятся на окружности
         const itemsNumber =
-          config.cardSize > 2 * circleRadius
+          this.cardSize > 2 * circleRadius
             ? 1
             : Math.floor(
-                Math.PI / Math.asin(config.cardSize / (2 * circleRadius)),
+                Math.PI / Math.asin(this.cardSize / (2 * circleRadius)),
               )
 
         for (let itemIndex = 0; itemIndex < itemsNumber; itemIndex++) {
           this.addCubeToScene({
-            sizeX: config.cardSize / Math.sqrt(2),
-            sizeY: config.cardSize / Math.sqrt(2),
-            sizeZ: config.cardSize / Math.sqrt(2) / 20,
+            sizeX: this.cardSize / Math.sqrt(2),
+            sizeY: this.cardSize / Math.sqrt(2),
+            sizeZ: this.cardSize / Math.sqrt(2) / 20,
             positionX:
               circleRadius * Math.cos((2 * Math.PI * itemIndex) / itemsNumber),
             positionY: y,
